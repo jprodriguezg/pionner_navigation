@@ -1,0 +1,15 @@
+<!-- -->
+
+<launch>
+
+    <node name="navsat" pkg="nmea_navsat_driver" type="nmea_serial_driver"  respawn="true">
+       <param name="port" value="/dev/ttyUSB0"/>
+       <param name="baud" value="4800"/>
+    </node>
+    
+    <node name="gps_out_node" pkg="gps_extension" type="utm_conversion"  output="screen">
+	<remap from="GPS_topic"  to="/fix"/>
+	<param name="South_Hemisphere" value="false"/>
+    </node>
+
+</launch>

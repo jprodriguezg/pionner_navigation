@@ -1,0 +1,20 @@
+<!-- This is a sample lanuch file, please change it based on your needs -->
+
+<launch>
+
+	<!-- This line open the joy package and cofigure the joy package to use the Xbox control -->
+	<node name="joy_node" pkg="joy" type="joy_node" output="screen" clear_params="true">
+		<param name="dev" type="str" value="/dev/input/js0"/>
+	</node>
+	
+	<node name="rosaria_node" pkg="rosaria" type="RosAria" output="screen" clear_params="true">
+	</node>
+
+	<node name="joy2piooner_node" pkg="piooner_xbox_controller" type="xboxJostick2piooner" output="screen" clear_params="true">
+		<remap from="joystick_status"  to="/joy"/>
+		<remap from="piooner_velocity_topic"  to="/rosaria_node/cmd_vel"/>
+		<remap from="enable_motors_service"  to="/rosaria_node/enable_motors"/>
+		<remap from="disable_motors_service"  to="/rosaria_node/disable_motors"/>
+	</node>
+
+</launch>
