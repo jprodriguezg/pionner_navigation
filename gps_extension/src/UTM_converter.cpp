@@ -7,7 +7,8 @@
 
 #define PI 3.14159265
 
-float longitude,latitude,altitude;
+float longitude,latitude;
+double altitude;
 
 void GPSCallback(const sensor_msgs::NavSatFix::ConstPtr& msg){
 
@@ -33,33 +34,33 @@ ros::Publisher gps_extension_pub_=nh_.advertise<pionner_project_messages::gps_ex
 
 	while(ros::ok()){
 	
-	/*Semieje mayor (a) - Semieje menor (b) */
+	/* The Highest semiaxis (a) - The Lowest semiaxis (b) */
 	double a=6378388.0;
 	double b=6356911.946139;
 	
-	/* Almaceno la latitud y longitud actuales */
+	/* Save the current longitude and latitude */
 	double lon=longitude;
 	double lat=latitude;
 	
-	/* Latitud y longitud (En radianes) */
+	/* Latitude and longitude (In radians) */
 	double latRad=(lat*PI)/180;
 	double lonRad=(lon*PI)/180;
 
-	/* Radio de curvatura polar (c) - Aplanamiento (d) */
+	/* Polar radius (c) - flattening (d) */
 	double c=pow(a,2)/b;
 	double d=(a-b)/a;
 	
-	/* Excentricidad y Segunda Excentricidad */
+	/* First and second eccentricity */
 	double e=sqrt(pow(a,2)-pow(b,2))/a;
 	double se=sqrt(pow(a,2)-pow(b,2))/b;
 
-	/* Huso Horario */
-	int huso=int((lon/6)+31);
+	/* Time zone */
+	int time_zone=int((lon/6)+31);
 
-	/*Distancia angular entre la longitud y el meridiano central del uso meridiano central (mc) */
-	float mc=lonRad-(((huso*6-183)*PI)/180);
+	/* Angular distance between the longitude and the central meridian of the time zone (mc) */
+	float mc=lonRad-(((time_zone*6-183)*PI)/180);
 
-	/* Calculo Parametros */
+	/* Parameters */
 	double A=cos(latRad)*sin(mc);
 	double ep=((double)1/(double)2)*log((1+A)/(1-A));
 	double n=atan(tan(latRad)/cos(mc))-latRad;
@@ -77,17 +78,17 @@ ros::Publisher gps_extension_pub_=nh_.advertise<pionner_project_messages::gps_ex
 
 	double B=(float)0.9996*c*(latRad-alpha*J2+betha*J4-gama*J6);
 
-	/* Calculo de X y Y*/
+	/* Computing X and Y*/
 	double X=ep*v*(1+(z/3))+(float)500000;
 	double Y=n*v*(1+z)+B;
 
 	if(South_Hemisphere == true)
 		Y=Y+10000000;
 
-	//std::cout << "X " << X << " Y  " << Y << " Huso Horario " <<huso<<std::endl;	
-
 	publish_data.X = X;
 	publish_data.Y = Y;
+	publish_data.altitude = altitude;
+	publish_data.time_zone = time_zone;
 	gps_extension_pub_.publish(publish_data);
 
 	
