@@ -10,7 +10,7 @@
 	<remap from="waypoint_topic"  to="/drone_target_points"/>
 	<remap from="drone_info_topic"  to="/optitrack/quadrotor"/>
 	<param name="range" value="10.0"/>
-	<param name="delta_time" value="0.0"/>
+	<param name="delta_time" value="20.0"/>
 	<param name="emergency" value="false"/>
 	<rosparam>central_point:  [5.0, 5.0]</rosparam>  <!-- [x, y] -->
 	<rosparam>final_position:  [0.0, 0.0]</rosparam>  <!-- [x, y] -->

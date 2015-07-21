@@ -61,6 +61,7 @@ ros::Publisher waypoint_info_pub_=nh_.advertise<drone_control_msgs::send_control
 double rho, base_time = 0.0, delta_time = 0.0, range = 2.0;
 std::vector<double> central_point (2,0), final_pose (2,0), emergency_pose(2,0);
 drone_control_msgs::send_control_data waypoint_publish;
+waypoint_publish.position.z = 1.0;
 
 bool flag = true, emergency = false;
 int index = 0;
@@ -79,8 +80,10 @@ double quadrant[4][2];
 		if(emergency == true){
 			waypoint_publish.position.x = emergency_pose[0];
 			waypoint_publish.position.y = emergency_pose[1];
+			waypoint_info_pub_.publish(waypoint_publish);
 			flag = true;
 			nhp_.setParam("delta_time", 0.0);
+			//nhp_.setParam("emergency", false);
 		}
 		
 		else{
@@ -112,31 +115,27 @@ double quadrant[4][2];
 						else{
 							index = 0;
 						}
-					}
 					waypoint_publish.position.x = quadrant[index][0];
 					waypoint_publish.position.y = quadrant[index][1];
+					waypoint_info_pub_.publish(waypoint_publish);
+					}	
 				}
 				else{
 					waypoint_publish.position.x = final_pose[0];
 					waypoint_publish.position.y = final_pose[1];
+					waypoint_info_pub_.publish(waypoint_publish);
 					flag = true;
 					nhp_.setParam("delta_time", 0.0);
 					base_time = 0.0;
 				}
 			}
 		}
-	
-		waypoint_publish.position.z = 1.0;
-		waypoint_info_pub_.publish(waypoint_publish);
 
 		/*
 		std::cout <<delta_time<<std::endl;
 		std::cout <<rho<<std::endl;
 		std::cout <<ros::Time::now()<<std::endl;*/
 		
-
-		
-	
 	   	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
 	    	rate.sleep();
 	}
