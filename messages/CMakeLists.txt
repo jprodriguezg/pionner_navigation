@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pionner_project_messages)
+project(robot_cooperation_project_msgs)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -49,7 +49,6 @@ catkin_package(CATKIN_DEPENDS
 ###########
 ## Build ##
 ###########
-
 
 include_directories(${catkin_INCLUDE_DIRS})
 

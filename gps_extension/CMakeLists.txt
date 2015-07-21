@@ -71,7 +71,7 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(utm_conversion src/UTM_converter.cpp)
-add_dependencies(utm_conversion pionner_project_messages_generate_messages_cpp)
+add_dependencies(utm_conversion robot_cooperation_project_msgs_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(utm_conversion ${catkin_LIBRARIES})

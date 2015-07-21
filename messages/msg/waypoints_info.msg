@@ -1,0 +1,10 @@
+
+Header header
+geometry_msgs/Vector3 position
+geometry_msgs/Vector3 target_point
+geometry_msgs/Vector3 final_position
+geometry_msgs/Vector3 emergency_position
+float32 target_distance
+float32 flight_time
+bool emergency_status
+bool stop_mission_status

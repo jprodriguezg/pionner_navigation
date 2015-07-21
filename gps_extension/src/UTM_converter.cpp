@@ -3,7 +3,7 @@
 #include <vector>
 #include <ros/ros.h>
 #include <sensor_msgs/NavSatFix.h>
-#include <pionner_project_messages/gps_extension.h>
+#include <robot_cooperation_project_msgs/gps_extension.h>
 
 #define PI 3.14159265
 
@@ -25,12 +25,12 @@ ros::init(argc, argv, "joystick2piooner_node");
 ros::NodeHandle nh_;
 ros::Rate rate(20.0);
 
-pionner_project_messages::gps_extension publish_data;
+robot_cooperation_project_msgs::gps_extension publish_data;
 bool South_Hemisphere = false;
 nh_.getParam("/gps_out_node/South_Hemisphere",South_Hemisphere);
 
 ros::Subscriber joy_sub_=nh_.subscribe("GPS_topic", 10, GPSCallback);
-ros::Publisher gps_extension_pub_=nh_.advertise<pionner_project_messages::gps_extension>("gps_extension_topic", 1);
+ros::Publisher gps_extension_pub_=nh_.advertise<robot_cooperation_project_msgs::gps_extension>("gps_extension_topic", 1);
 
 	while(ros::ok()){
 	

@@ -83,10 +83,13 @@ include_directories(
 
 
 ## Declare a cpp executable
-add_executable(set_waypoints src/ar_drone_set_waypoints.cpp)
-add_dependencies(set_waypoints pionner_project_messages_generate_messages_cpp)
+#add_executable(ar_drone_set_waypoints src/ar_drone_set_waypoints.cpp)
+#add_dependencies(ar_drone_set_waypoints robot_cooperation_project_msgs_generate_messages_cpp)
+add_executable(set_waypoints src/set_waypoints.cpp)
+add_dependencies(set_waypoints robot_cooperation_project_msgs_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
+#target_link_libraries(ar_drone_set_waypoints ${catkin_LIBRARIES})
 target_link_libraries(set_waypoints ${catkin_LIBRARIES})
 
 #############

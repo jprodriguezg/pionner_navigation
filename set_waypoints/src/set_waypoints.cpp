@@ -4,8 +4,8 @@
 #include <math.h> 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <drone_control_msgs/send_control_data.h>
 #include <robot_cooperation_project_msgs/waypoints_info.h>
+#include <iris_test/GoToWaypoint.h>
 
 # define PI           3.14159265358979323846
 std::vector<double> Drone_info(4,0);
@@ -25,12 +25,12 @@ void hasReceivedModelState(const geometry_msgs::PoseStamped::ConstPtr& msg){
   return;
 }
 
-void fill_waypoints_info(bool emergency, bool stop_mission, std::vector<double> final_pose, std::vector<double> emergency_pose, double rho, double delta_time, drone_control_msgs::send_control_data waypoint_publish){
+void fill_waypoints_info(bool emergency, bool stop_mission, std::vector<double> final_pose, std::vector<double> emergency_pose, double rho, double delta_time, iris_test::GoToWaypoint iris_waypoints_service){
 	
 	waypoints_info.emergency_status = emergency;
 	waypoints_info.stop_mission_status = stop_mission;
-	waypoints_info.target_point.x = waypoint_publish.position.x;
-	waypoints_info.target_point.y = waypoint_publish.position.y;
+	waypoints_info.target_point.x = iris_waypoints_service.request.x;
+	waypoints_info.target_point.y = iris_waypoints_service.request.y;
 	waypoints_info.target_point.z = 1.0;
 	waypoints_info.final_position.x = final_pose[0];
 	waypoints_info.final_position.y = final_pose[1];
@@ -78,17 +78,18 @@ ros::NodeHandle nhp_("~");
 ros::Rate rate(20.0);
 
 ros::Subscriber optitrack_sub_=nh_.subscribe("drone_info_topic", 10, hasReceivedModelState);
-ros::Publisher waypoints_pub_=nh_.advertise<drone_control_msgs::send_control_data>("waypoint_topic", 1);
 ros::Publisher waypoint_info_pub_=nh_.advertise<robot_cooperation_project_msgs::waypoints_info>("waypoint_info_topic", 1);
+ros::ServiceClient iris_waypoints_client =  nh_.serviceClient<iris_test::GoToWaypoint>("gotowaypoint_server");
 
 
 double rho, base_time = 0.0, delta_time = 0.0, range = 2.0;
 std::vector<double> central_point (2,0), final_pose (2,0), emergency_pose(2,0);
-drone_control_msgs::send_control_data waypoint_publish;
-waypoint_publish.position.z = 1.0;
 bool flag = true, emergency = false, stop_mission = false;
 int index = -1, ant_index = -1;
 
+// Define service variables
+iris_test::GoToWaypoint iris_waypoints_service;
+iris_waypoints_service.request.epsg = 21781;
 
 // Pre definition of quadrant matrix
 nhp_.getParam("range",range);
@@ -106,17 +107,17 @@ double quadrant[4][2] = {{central_point[0]-range/2, central_point[1]+range/2},
 
 		if(emergency == true || stop_mission == true){
 			if(emergency == true){
-				waypoint_publish.position.x = emergency_pose[0];
-				waypoint_publish.position.y = emergency_pose[1];
+				iris_waypoints_service.request.x = emergency_pose[0];
+				iris_waypoints_service.request.y = emergency_pose[1];
 				nhp_.setParam("emergency", false);
 			}
 			else{
-				waypoint_publish.position.x = Drone_info[0];
-				waypoint_publish.position.y = Drone_info[1];
+				iris_waypoints_service.request.x = Drone_info[0];
+				iris_waypoints_service.request.y = Drone_info[1];
 				nhp_.setParam("stop_mission", false);
 			
 			}
-			waypoints_pub_.publish(waypoint_publish);
+			iris_waypoints_client.call(iris_waypoints_service);
 			flag = true;
 			nhp_.setParam("delta_time", 0.0);
 			delta_time = 0.0;
@@ -151,16 +152,16 @@ double quadrant[4][2] = {{central_point[0]-range/2, central_point[1]+range/2},
 					}
 
 					if (index != ant_index){
-						waypoint_publish.position.x = quadrant[index][0];
-						waypoint_publish.position.y = quadrant[index][1];
-						waypoints_pub_.publish(waypoint_publish);
+						iris_waypoints_service.request.x = quadrant[index][0];
+						iris_waypoints_service.request.y = quadrant[index][1];
+						iris_waypoints_client.call(iris_waypoints_service);
 						ant_index = index;
 					}	
 				}
 				else{
-					waypoint_publish.position.x = final_pose[0];
-					waypoint_publish.position.y = final_pose[1];
-					waypoints_pub_.publish(waypoint_publish);
+					iris_waypoints_service.request.x = final_pose[0];
+					iris_waypoints_service.request.y = final_pose[1];
+					iris_waypoints_client.call(iris_waypoints_service);
 					flag = true;
 					nhp_.setParam("delta_time", 0.0);
 					base_time = 0.0;
@@ -168,7 +169,7 @@ double quadrant[4][2] = {{central_point[0]-range/2, central_point[1]+range/2},
 			}
 		}
 
-		fill_waypoints_info(emergency, stop_mission, final_pose, emergency_pose, rho, delta_time, waypoint_publish);
+		fill_waypoints_info(emergency, stop_mission, final_pose, emergency_pose, rho, delta_time, iris_waypoints_service);
 		waypoint_info_pub_.publish(waypoints_info);
 		
 		//std::cout <<delta_time<<std::endl;

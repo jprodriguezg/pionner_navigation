@@ -6,10 +6,9 @@
 			<rosparam>rigid_bodies_name:  [quadrotor]</rosparam>
 	</node>
 
-    <node name="set_waypoints_node" pkg="set_waypoints" type="set_waypoints"  output="screen">
+    <node name="set_waypoints_node" pkg="set_waypoints" type="ar_drone_set_waypoints"  output="screen">
 	<remap from="waypoint_topic"  to="/drone_target_points"/>
 	<remap from="drone_info_topic"  to="/optitrack/quadrotor"/>
-	<remap from="gotowaypoint_server"  to="/gotowaypoint"/>
 	<param name="range" value="10.0"/>
 	<param name="delta_time" value="30.0"/>
 	<param name="emergency" value="false"/>
