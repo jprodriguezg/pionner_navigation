@@ -5,6 +5,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <robot_cooperation_project_msgs/waypoints_info.h>
+#include <robot_cooperation_project_msgs/sector_info.h>
 #include <iris_test/GoToWaypoint.h>
 
 # define PI           3.14159265358979323846
@@ -25,7 +26,7 @@ void hasReceivedModelState(const geometry_msgs::PoseStamped::ConstPtr& msg){
   return;
 }
 
-void fill_waypoints_info(bool emergency, bool stop_mission, std::vector<double> final_pose, std::vector<double> emergency_pose, double rho, double delta_time, iris_test::GoToWaypoint iris_waypoints_service){
+void fill_waypoints_info(bool emergency, bool stop_mission, std::vector<double> final_pose, std::vector<double> emergency_pose, double rho, double flight_time, iris_test::GoToWaypoint iris_waypoints_service){
 	
 	waypoints_info.emergency_status = emergency;
 	waypoints_info.stop_mission_status = stop_mission;
@@ -38,7 +39,7 @@ void fill_waypoints_info(bool emergency, bool stop_mission, std::vector<double> 
 	waypoints_info.emergency_position.x = emergency_pose[0];
 	waypoints_info.emergency_position.y = emergency_pose[1];
 	waypoints_info.emergency_position.z = 1.0;
-	waypoints_info.flight_time = delta_time;
+	waypoints_info.flight_time = flight_time;
 	waypoints_info.target_distance = rho;
 
 }
@@ -46,14 +47,21 @@ void fill_waypoints_info(bool emergency, bool stop_mission, std::vector<double> 
 void new_quadrant(double quadrant[4][2], std::vector<double> central_point, double range){
 
 	quadrant[0][0] = central_point[0]-range/2;
+	waypoints_info.sector.vertex_1[0] = quadrant[0][0];
 	quadrant[0][1] = central_point[1]+range/2;
+	waypoints_info.sector.vertex_1[1] = quadrant[0][1];
 	quadrant[1][0] = central_point[0]+range/2;
+	waypoints_info.sector.vertex_2[0] = quadrant[1][0];
 	quadrant[1][1] = central_point[1]+range/2;
+	waypoints_info.sector.vertex_2[1] = quadrant[1][1];
 	quadrant[2][0] = central_point[0]+range/2;
+	waypoints_info.sector.vertex_3[0] = quadrant[2][0];
 	quadrant[2][1] = central_point[1]-range/2;
+	waypoints_info.sector.vertex_3[1] = quadrant[2][1];
 	quadrant[3][0] = central_point[0]-range/2;
+	waypoints_info.sector.vertex_4[0] = quadrant[3][0];
 	quadrant[3][1] = central_point[1]-range/2;
-
+	waypoints_info.sector.vertex_4[1] = quadrant[3][1];
 }
 
 int nearest_vertex(double quadrant[4][2]){
@@ -82,9 +90,9 @@ ros::Publisher waypoint_info_pub_=nh_.advertise<robot_cooperation_project_msgs::
 ros::ServiceClient iris_waypoints_client =  nh_.serviceClient<iris_test::GoToWaypoint>("gotowaypoint_server");
 
 
-double rho, base_time = 0.0, delta_time = 0.0, range = 2.0;
+double rho, base_time = 0.0, flight_time = 0.0, range = 2.0;
 std::vector<double> central_point (2,0), final_pose (2,0), emergency_pose(2,0);
-bool flag = true, emergency = false, stop_mission = false;
+bool flag_parameters = true, flag_stop = true, emergency = false, stop_mission = false;
 int index = -1, ant_index = -1;
 
 // Define service variables
@@ -99,6 +107,16 @@ double quadrant[4][2] = {{central_point[0]-range/2, central_point[1]+range/2},
 				{central_point[0]+range/2, central_point[1]-range/2},
 				{central_point[0]-range/2, central_point[1]-range/2}};
 
+// Pre fill of the sector structure (waypoints_info)
+waypoints_info.sector.central_point.resize(2);
+waypoints_info.sector.vertex_1.resize(2);
+waypoints_info.sector.vertex_2.resize(2);
+waypoints_info.sector.vertex_3.resize(2);
+waypoints_info.sector.vertex_4.resize(2);
+waypoints_info.sector.edge_size = range;
+waypoints_info.sector.central_point[0] = central_point[0];
+waypoints_info.sector.central_point[1] = central_point[1];
+
 	while (ros::ok()){
 
 		nhp_.getParam("emergency_position",emergency_pose);
@@ -109,38 +127,47 @@ double quadrant[4][2] = {{central_point[0]-range/2, central_point[1]+range/2},
 			if(emergency == true){
 				iris_waypoints_service.request.x = emergency_pose[0];
 				iris_waypoints_service.request.y = emergency_pose[1];
-				nhp_.setParam("emergency", false);
 			}
 			else{
 				iris_waypoints_service.request.x = Drone_info[0];
 				iris_waypoints_service.request.y = Drone_info[1];
-				nhp_.setParam("stop_mission", false);
-			
 			}
-			iris_waypoints_client.call(iris_waypoints_service);
-			flag = true;
-			nhp_.setParam("delta_time", 0.0);
-			delta_time = 0.0;
+
+			if (flag_stop == true){ // To call the client only once
+				iris_waypoints_client.call(iris_waypoints_service);
+				nhp_.setParam("flight_time", 0.0);
+				flight_time = 0.0;
+				base_time = 0.0;
+				waypoints_info.mission_time = base_time;
+				flag_parameters = true;
+				flag_stop == false;
+				}	
 		}
 		
 		else{	
-			if (flag == true){
+			flag_stop = true;
+			if (flag_parameters == true){
 				nhp_.getParam("range",range);
 				nhp_.getParam("central_point",central_point);
 				nhp_.getParam("final_position",final_pose);
-				nhp_.getParam("delta_time",delta_time);
+				nhp_.getParam("flight_time",flight_time);
 
-				if (delta_time != 0.0){
+				if (flight_time != 0.0){
 
 					new_quadrant(quadrant,central_point,range);
 					index = nearest_vertex(quadrant);    
-					flag = false;
+					flag_parameters = false;
 					base_time = ros::Time::now().toSec();
+			
+					waypoints_info.sector.edge_size = range;
+					waypoints_info.sector.central_point[0] = central_point[0];
+					waypoints_info.sector.central_point[1] = central_point[1];
 				}
 			}
 
 			else{
-				if (base_time+delta_time > ros::Time::now().toSec()){
+				if (base_time+flight_time > ros::Time::now().toSec()){
+					waypoints_info.mission_time = base_time+flight_time-ros::Time::now().toSec();
 					rho = sqrt(pow(quadrant[index][0]-Drone_info[0],2)+pow(quadrant[index][1]-Drone_info[1],2));
 					if (rho < 0.2){
 						if (index<3){
@@ -162,18 +189,16 @@ double quadrant[4][2] = {{central_point[0]-range/2, central_point[1]+range/2},
 					iris_waypoints_service.request.x = final_pose[0];
 					iris_waypoints_service.request.y = final_pose[1];
 					iris_waypoints_client.call(iris_waypoints_service);
-					flag = true;
-					nhp_.setParam("delta_time", 0.0);
+					flag_parameters = true;
+					nhp_.setParam("flight_time", 0.0);
 					base_time = 0.0;
+					waypoints_info.mission_time = base_time;
 				}
 			}
 		}
 
-		fill_waypoints_info(emergency, stop_mission, final_pose, emergency_pose, rho, delta_time, iris_waypoints_service);
+		fill_waypoints_info(emergency, stop_mission, final_pose, emergency_pose, rho, flight_time, iris_waypoints_service);
 		waypoint_info_pub_.publish(waypoints_info);
-		
-		//std::cout <<delta_time<<std::endl;
-
 		
 	   	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
 	    	rate.sleep();

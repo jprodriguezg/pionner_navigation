@@ -6,5 +6,9 @@ geometry_msgs/Vector3 final_position
 geometry_msgs/Vector3 emergency_position
 float32 target_distance
 float32 flight_time
+float32 mission_time
 bool emergency_status
 bool stop_mission_status
+robot_cooperation_project_msgs/sector_info sector
+
+

@@ -52,7 +52,6 @@ catkin_package(CATKIN_DEPENDS
 
 include_directories(${catkin_INCLUDE_DIRS})
 
-
 #############
 ## Install ##
 #############
