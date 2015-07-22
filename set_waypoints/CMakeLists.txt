@@ -10,6 +10,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  robot_cooperation_project_msgs
+  iris_test
 )
 
 
@@ -50,7 +52,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## catkin specific configuration ##
 ###################################
 
-catkin_package(CATKIN_DEPENDS geometry_msgs roscpp rospy sensor_msgs std_msgs
+catkin_package(CATKIN_DEPENDS geometry_msgs roscpp rospy sensor_msgs std_msgs robot_cooperation_project_msgs iris_test
 )
 
 ###########
