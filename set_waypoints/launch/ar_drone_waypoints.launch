@@ -9,10 +9,12 @@
     <node name="set_waypoints_node" pkg="set_waypoints" type="ar_drone_set_waypoints"  output="screen">
 	<remap from="waypoint_topic"  to="/drone_target_points"/>
 	<remap from="drone_info_topic"  to="/optitrack/quadrotor"/>
+	<remap from="waypoint_info_topic"  to="/set_waypoints_info"/>
 	<param name="range" value="10.0"/>
+	<param name="stop_mission" value="false"/>
 	<param name="flight_time" value="50.0"/>
 	<param name="emergency" value="false"/>
-	<param name="stop_mission" value="false"/>
+	<param name="minumum_radius" value="0.2"/>
 	<rosparam>central_point:  [5.0, 5.0]</rosparam>  <!-- [x, y] -->
 	<rosparam>final_position:  [-5.0, -5.0]</rosparam>  <!-- [x, y] -->
 	<rosparam>emergency_position:  [1.0, 1.0]</rosparam>  <!-- [x, y] -->
